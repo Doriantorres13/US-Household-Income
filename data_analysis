@@ -1,0 +1,125 @@
+#US Household Income Exploratory Data Analysis 
+
+SELECT COUNT(id)
+FROM us_household_income_cleaned;
+
+SELECT COUNT(id)
+FROM us_household_income_statistics;
+
+#examining the water and land per state
+SELECT State_Name, SUM(ALand), SUM(AWater)
+FROM us_household_income_cleaned
+GROUP BY State_name
+ORDER BY 2 DESC;
+
+#Top 10 largest states by land 
+SELECT State_Name, SUM(ALand)
+FROM us_household_income_cleaned
+GROUP BY State_Name
+ORDER BY SUM(ALand) DESC
+LIMIT 10;
+
+#Top 10 the largest states by water
+SELECT State_Name, SUM(AWater)
+FROM us_household_income_cleaned
+GROUP BY State_name
+ORDER BY SUM(AWater) DESC
+LIMIT 10;
+
+
+#we combined both tables on the column ID
+SELECT *
+FROM us_household_income_cleaned AS u
+JOIN us_household_income_statistics AS us
+	ON u.id = us.id;
+
+#we are looking at the different things we selected now from both tables
+SELECT u.State_Name, u.County, u.Type, u.`Primary`,us.Mean, us.Median
+FROM us_household_income_cleaned AS u
+RIGHT JOIN us_household_income_statistics AS us
+	ON u.id = us.id;
+
+#we are looking at the 10 states with the lowest average mean income
+SELECT u.State_Name, ROUND(AVG(us.Mean), 1) AS Mean
+FROM us_household_income_cleaned AS u
+RIGHT JOIN us_household_income_statistics AS us
+	ON u.id = us.id
+GROUP BY u.State_Name
+ORDER BY 2
+LIMIT 10;
+
+#Top 10 states with the highest average mean income
+SELECT u.State_Name, ROUND(AVG(us.Mean), 1) AS Mean
+FROM us_household_income_cleaned AS u
+RIGHT JOIN us_household_income_statistics AS us
+	ON u.id = us.id
+GROUP BY u.State_Name
+ORDER BY 2 DESC
+LIMIT 10;
+
+#Top 5 types with the highest average mean income 
+SELECT u.Type, 
+COUNT(Type),
+ROUND(AVG(us.Mean), 1) AS Mean, 
+ROUND(AVG(us.Median), 1) AS Median
+FROM us_household_income_cleaned AS u
+RIGHT JOIN us_household_income_statistics AS us
+	ON u.id = us.id
+GROUP BY u.Type
+ORDER BY 3 DESC
+LIMIT 5;
+
+#Top 5 types of the highest average median income
+SELECT u.Type, 
+COUNT(Type),
+ROUND(AVG(us.Mean), 1) AS Mean, 
+ROUND(AVG(us.Median), 1) AS Median
+FROM us_household_income_cleaned AS u
+RIGHT JOIN us_household_income_statistics AS us
+	ON u.id = us.id
+GROUP BY u.Type
+ORDER BY 4 DESC
+LIMIT 5;
+
+#was interested to see which state had community since they're average median income is so low 
+SELECT *
+FROM us_household_income_cleaned
+WHERE Type = 'Community'
+;
+
+#because there was some types with a low quantity count we filtered them out to only see ones that have over 100 
+SELECT u.Type, 
+COUNT(Type),
+ROUND(AVG(us.Mean), 1), 
+ROUND(AVG(us.Median), 1)
+FROM us_household_income_cleaned AS u
+RIGHT JOIN us_household_income_statistics AS us
+	ON u.id = us.id
+GROUP BY u.Type
+HAVING COUNT(Type) > 100
+ORDER BY 4 DESC
+LIMIT 20;
+
+#Top 10 cities with the highest average median income 
+SELECT u.State_Name, 
+u.City,
+ROUND(AVG(Median), 1) AS Median
+FROM us_household_income_cleaned AS u
+RIGHT JOIN us_household_income_statistics AS us
+	ON u.id = us.id
+GROUP BY u.State_Name, u.City
+ORDER BY ROUND(AVG(Mean), 1) DESC
+LIMIT 10;
+
+#Top 10 cities with the highest average mean income 
+SELECT u.State_Name, 
+u.City,
+ROUND(AVG(Mean), 1) AS Mean
+FROM us_household_income_cleaned AS u
+RIGHT JOIN us_household_income_statistics AS us
+	ON u.id = us.id
+GROUP BY u.State_Name, u.City
+ORDER BY ROUND(AVG(Mean), 1) DESC
+LIMIT 10;
+
+
