@@ -1,18 +1,19 @@
 -- Automated Data Cleaning 
 
 SELECT *
-FROM bakery.us_household_income_og;
+FROM `US Household Income`.us_household_income;
 
 SELECT * 
-FROM bakery.us_household_income_cleaned;
+FROM `US Household Income`.us_household_income_cleaned;
 
-DROP TABLE us_household_income_cleaned;
 DROP PROCEDURE IF EXISTS Copy_and_Clean_data;
 
 DELIMITER $$
 CREATE PROCEDURE Copy_and_Clean_data()
 BEGIN
+
 -- CREATING OUR TABLE 
+
 	CREATE TABLE IF NOT EXISTS `us_household_income_cleaned` (
 	  `row_id` int DEFAULT NULL,
 	  `id` int DEFAULT NULL,
@@ -32,11 +33,11 @@ BEGIN
 	  `Lon` double DEFAULT NULL,
 	`TimeStamp` TIMESTAMP DEFAULT NULL
 	) ;
-
+    
 -- COPY DATA TO NEW TABLE 
 
 INSERT INTO `us_household_income_cleaned`
-  SELECT 
+SELECT 
     row_id,
     id,
     State_Code,
@@ -59,50 +60,55 @@ INSERT INTO `us_household_income_cleaned`
   AND AWater BETWEEN -2147483648 AND 2147483647 
 ; 
 
--- Data Cleaning Steps 
+-- Data Cleaning Steps
 
-	-- 1. Remove Duplicates
-	DELETE FROM us_household_income_cleaned 
-	WHERE 
-		row_id IN (
-		SELECT row_id
+-- Removing Duplicates
+
+DELETE FROM `US Household Income`.us_household_income_cleaned 
+WHERE row_id IN (
+	SELECT row_id
 	FROM (
 		SELECT row_id, id,
-			ROW_NUMBER() OVER (
-				PARTITION BY id, `TimeStamp`
-				ORDER BY id, `TimeStamp`) AS row_num
-		FROM 
-			bakery.us_household_income_cleaned 
-	) duplicates
-	WHERE 
-		row_num > 1
+		ROW_NUMBER() OVER (PARTITION BY id, `TimeStamp`
+        ORDER BY id, `TimeStamp`) AS row_num
+		FROM bakery.us_household_income_cleaned ) AS duplicates
+		WHERE row_num > 1
 	);
+    
+-- Fixing some data quality issues by fixing typos and general standardization
+UPDATE `US Household Income`.us_household_income_cleaned 
+SET State_Name = 'Georgia'
+WHERE State_Name = 'georia';
 
-	-- 2. Fixing some data quality issues by fixing typos and general standardization
-	UPDATE bakery.us_household_income_cleaned 
-	SET State_Name = 'Georgia'
-	WHERE State_Name = 'georia';
+UPDATE `US Household Income`.us_household_income
+SET State_Name = 'Alabama'
+WHERE State_Name = 'alabama';
 
-	UPDATE bakery.us_household_income_cleaned 
-	SET County = UPPER(County);
+UPDATE `US Household Income`.us_household_income_cleaned 
+SET `Type` = 'Borough'
+WHERE `Type` = 'Boroughs';
 
-	UPDATE bakery.us_household_income_cleaned 
-	SET City = UPPER(City);
+UPDATE `US Household Income`.us_household_income_cleaned 
+SET `Type` = 'CDP'
+WHERE `Type` = 'CPD';
 
-	UPDATE bakery.us_household_income_cleaned 
-	SET Place = UPPER(Place);
+UPDATE `US Household Income`.us_household_income
+SET Place = 'Autaugaville'
+WHERE County = 'Autauga County'
+AND City = 'Vinemont'
+;
 
-	UPDATE bakery.us_household_income_cleaned 
-	SET State_Name = UPPER(State_Name);
+UPDATE `US Household Income`.us_household_income_cleaned 
+SET County = UPPER(County);
 
-	UPDATE bakery.us_household_income_cleaned 
-	SET `Type` = 'CDP'
-	WHERE `Type` = 'CPD';
+UPDATE `US Household Income`.us_household_income_cleaned 
+SET City = UPPER(City);
 
-	UPDATE bakery.us_household_income_cleaned 
-	SET `Type` = 'Borough'
-	WHERE `Type` = 'Boroughs';
+UPDATE `US Household Income`.us_household_income_cleaned 
+SET Place = UPPER(Place);
 
+UPDATE `US Household Income`.us_household_income_cleaned 
+SET State_Name = UPPER(State_Name);
 
 END $$
 DELIMITER ;
@@ -115,49 +121,7 @@ CREATE EVENT run_data_cleaning
 	ON SCHEDULE EVERY 30 DAY
     DO CALL Copy_and_Clean_data();
 
-SELECT DISTINCT TimeStamp
-FROM bakery.us_household_income_cleaned;
 
--- DEBUGGING OR CHECKING STORED PROCEDURE WORKS 
--- LOOKING AT THE OLD DATA FIRST 
-		SELECT row_id, id, row_num
-	FROM (
-		SELECT row_id, id,
-			ROW_NUMBER() OVER (
-				PARTITION BY id
-				ORDER BY id) AS row_num
-		FROM 
-			bakery.us_household_income_og
-	) duplicates
-	WHERE 
-		row_num > 1;
-    
-SELECT COUNT(row_id)
-FROM bakery.us_household_income_og;
-
-SELECT State_Name, COUNT(State_Name)
-FROM bakery.us_household_income_og
-GROUP BY State_Name;
-
--- NOW WE ARE LOOKING AT THE NEW DATA 
-SELECT row_id, id, row_num
-	FROM (
-		SELECT row_id, id,
-			ROW_NUMBER() OVER (
-				PARTITION BY id
-				ORDER BY id) AS row_num
-		FROM 
-			bakery.us_household_income_cleaned
-	) duplicates
-	WHERE 
-		row_num > 1;
-    
-SELECT COUNT(row_id)
-FROM bakery.us_household_income_cleaned;
-
-SELECT State_Name, COUNT(State_Name)
-FROM bakery.us_household_income_cleaned
-GROUP BY State_Name;
 
 
 
