@@ -1,4 +1,4 @@
-# MySQL-Project
+# US_Household_Income
 Automated Data Cleaning for US Household Income Data
 
 I developed a comprehensive automated data-cleaning process for US household income data in this project. This was achieved by creating a stored procedure named 'Copy_and_Clean_data' and setting up an event to execute this procedure on a regular schedule.
