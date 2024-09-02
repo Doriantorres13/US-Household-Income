@@ -1,4 +1,4 @@
-# US Household Income Overview
+# US Household Income Summary
 
 This project comprehensively analyzes household income data across the United States. The data was cleaned, transformed, and analyzed to reveal insights into income distribution by state, city, and other geographical classifications. The final results were visualized using Tableau to create a dashboard, providing a user-friendly way to explore the data.
 
